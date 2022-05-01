@@ -26,11 +26,16 @@
 #include <string.h>
 
 typedef struct vector vector;
+
 struct vector {
-  char** buffer;
-  size_t length;
-  int (*push)(vector*,char*);
-  int (*is_empty)(vector*);
+    char **buffer;
+    size_t length;
+
+    int (*push)(vector *, char *);
+
+    int (*push_front)(vector *, char *);
+
+    int (*is_empty)(vector *);
 };
 
 /**
@@ -40,37 +45,68 @@ struct vector {
  * @param s string
  * @return 0 on success and non zero value on failure
  */
-int push(vector* self, char* s)
-{
-  if (self->length == 0)
-  {
-    self->buffer = (char**) malloc(sizeof(char*));
-    if (self->buffer == NULL)
-    {
-      return -1;
+int _push(vector *self, char *s) {
+    if (self->length == 0) {
+        self->buffer = (char **) malloc(sizeof(char *));
+        if (self->buffer == NULL) {
+            return -1;
+        }
+        self->buffer[self->length] = (char *) malloc((strlen(s) + 1) * sizeof(char));
+        if (self->buffer[self->length] == NULL) {
+            return -1;
+        }
+        strncpy(self->buffer[self->length], s, strlen(s));
+        self->length += 1;
+    } else {
+        self->buffer = (char **) realloc(self->buffer, (self->length + 1) * sizeof(char *));
+        if (self->buffer == NULL) {
+            return -1;
+        }
+        self->buffer[self->length] = (char *) malloc((strlen(s) + 1) * sizeof(char));
+        if (self->buffer[self->length] == NULL) {
+            return -1;
+        }
+        strncpy(self->buffer[self->length], s, strlen(s));
+        self->length += 1;
     }
-    self->buffer[self->length] = (char*) malloc((strlen(s) + 1) * sizeof(char));
-    if (self->buffer[self->length] == NULL)
-    {
-      return -1;
+    return 0;
+}
+
+/**
+ * Push element to the first of the vector
+ *
+ * @param self pointer to the vector
+ * @param s string
+ * @return 0 on success and non zero value on failure
+ */
+int _push_front(vector *self, char *s) {
+    if (self->length == 0) {
+        self->buffer = (char **) malloc(sizeof(char *));
+        if (self->buffer == NULL) {
+            return -1;
+        }
+        self->buffer[self->length] = (char *) malloc((strlen(s) + 1) * sizeof(char));
+        if (self->buffer[self->length] == NULL) {
+            return -1;
+        }
+        strncpy(self->buffer[self->length], s, strlen(s));
+        self->length += 1;
+    } else {
+        char **new_buff = (char **) malloc((self->length + 1) * sizeof(char *));
+        if (new_buff == NULL) {
+            return -1;
+        }
+        new_buff[0] = (char *) malloc((strlen(s) + 1) * sizeof(char));
+        if (new_buff[0] == NULL) {
+            return -1;
+        }
+        strncpy(new_buff[0], s, strlen(s));
+        memcpy(new_buff + 1, self->buffer, self->length * sizeof(char *));
+        free(self->buffer);
+        self->buffer = new_buff;
+        self->length += 1;
     }
-    strncpy(self->buffer[self->length], s, strlen(s));
-    self->length += 1;
-  } else {
-    self->buffer = (char**) realloc(self->buffer, (self->length + 1) * sizeof(char*));
-    if (self->buffer == NULL)
-    {
-      return -1;
-    }
-    self->buffer[self->length] = (char*) malloc((strlen(s) + 1) * sizeof(char));
-    if (self->buffer[self->length] == NULL)
-    {
-      return -1;
-    }
-    strncpy(self->buffer[self->length], s, strlen(s));
-    self->length += 1;
-  }
-  return 0;
+    return 0;
 }
 
 /**
@@ -79,13 +115,11 @@ int push(vector* self, char* s)
  * @param self pointer to the vector
  * @return 1 if it's empty and 0 if it's not
  */
-int is_empty(vector* self)
-{
-  if (self->length != 0)
-  {
-    return 0;
-  }
-  return 1;
+int _is_empty(vector *self) {
+    if (self->length != 0) {
+        return 0;
+    }
+    return 1;
 }
 
 /**
@@ -93,23 +127,18 @@ int is_empty(vector* self)
  *
  * @param self pointer to the vector
  */
-void vector_clean(vector* self)
-{
-  if (self != NULL)
-  {
-    if (self->buffer != NULL)
-    {
-      for (int i = 0; i < self->length; i++)
-        {
-          if (self->buffer[i] != NULL)
-          {
-            free(self->buffer[i]);
-          }
+void vector_clean(vector *self) {
+    if (self != NULL) {
+        if (self->buffer != NULL) {
+            for (int i = 0; i < self->length; i++) {
+                if (self->buffer[i] != NULL) {
+                    free(self->buffer[i]);
+                }
+            }
+            free(self->buffer);
         }
-      free(self->buffer);
+        free(self);
     }
-    free(self);
-  }
 }
 
 /**
@@ -118,16 +147,15 @@ void vector_clean(vector* self)
  * @param self pointer to the vector
  * @return vector
  */
-vector* vector_init()
-{
-  vector* self = (vector*) malloc(sizeof(vector));
-  if (self == NULL)
-  {
-    return NULL;
-  }
-  self->push = &push;
-  self->is_empty = &is_empty;
-  return self;
+vector *vector_init() {
+    vector *self = (vector *) malloc(sizeof(vector));
+    if (self == NULL) {
+        return NULL;
+    }
+    self->push = &_push;
+    self->push_front = &_push_front;
+    self->is_empty = &_is_empty;
+    return self;
 }
 
 #endif // __VECTOR_H__

@@ -5,6 +5,7 @@ int main()
 {
 	vector* vec = vector_init();
 	vec->push(vec,"Hello World");
+    vec->push_front(vec, "I'm the first");
 	for (int i = 0; i < vec->length; i++)
 	{
 		printf("%s\n", vec->buffer[i]);
