@@ -35,6 +35,8 @@ struct vector {
 
     int (*push_front)(vector *, char *);
 
+    int (*remove)(vector*,int);
+
     int (*is_empty)(vector *);
 };
 
@@ -110,6 +112,45 @@ int _push_front(vector *self, char *s) {
 }
 
 /**
+ * Remove element from the vector
+ *
+ * @param self pointer to the vector
+ * @param index index to remove
+ * @return 0 on success and non zero value on failure
+ */
+int _remove(vector* self, int index)
+{
+  if (!(index >= 0 && index < self->length))
+  {
+    return -1;
+  }
+  char** new_buff = (char**) malloc((self->length - 1) * sizeof(char*));
+  if (new_buff == NULL)
+  {
+    return -1;
+  }
+  int new_buff_i = 0;
+  for (int i = 0; i < self->length; i++)
+  {
+    if (i == index)
+    {
+      continue;
+    }
+    new_buff[new_buff_i] = (char*) malloc((strlen(self->buffer[i]) + 1) * sizeof(char));
+    strncpy(new_buff[new_buff_i], self->buffer[i], strlen(self->buffer[i]));
+    new_buff_i++;
+  }
+  for (int i = 0; i < self->length; i++)
+  {
+    free(self->buffer[i]);
+  }
+  free(self->buffer);
+  self->buffer = new_buff;
+  self->length -= 1;
+  return 0;
+}
+
+/**
  * Check if the vector is empty
  *
  * @param self pointer to the vector
@@ -154,6 +195,7 @@ vector *vector_init() {
     }
     self->push = &_push;
     self->push_front = &_push_front;
+    self->remove = &_remove;
     self->is_empty = &_is_empty;
     return self;
 }
