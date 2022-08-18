@@ -25,6 +25,120 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define vector_new(T) \
+\
+typedef struct vector_##T vector_##T; \
+\
+struct vector_##T { \
+    T *buffer; \
+    size_t length; \
+\
+    int (*push)(vector_##T *, T); \
+\
+    int (*push_front)(vector_##T *, T); \
+\
+    int (*remove)(vector_##T*,int); \
+\
+    int (*is_empty)(vector_##T *); \
+}; \
+\
+int _push_##T(vector_##T *self, T input) { \
+    if (self->length == 0) { \
+        self->buffer = (T *) malloc(sizeof(T)); \
+        if (self->buffer == NULL) { \
+            return -1; \
+        } \
+        self->buffer[self->length] = input; \
+        self->length += 1; \
+    } else { \
+        self->buffer = (T *) realloc(self->buffer, (self->length + 1) * sizeof(T)); \
+        if (self->buffer == NULL) { \
+            return -1; \
+        } \
+        self->buffer[self->length] = input; \
+        self->length += 1; \
+    } \
+    return 0; \
+} \
+\
+int _push_front_##T(vector_##T *self, T input) { \
+    if (self->length == 0) { \
+        self->buffer = (T *) malloc(sizeof(T)); \
+        if (self->buffer == NULL) { \
+            return -1; \
+        } \
+        self->buffer[self->length] = input; \
+        self->length += 1; \
+    } else { \
+        T *new_buff = (T *) malloc((self->length + 1) * sizeof(T)); \
+        if (new_buff == NULL) { \
+            return -1; \
+        } \
+        new_buff[0] = input; \
+        memcpy(new_buff + 1, self->buffer, self->length * sizeof(T)); \
+        free(self->buffer); \
+        self->buffer = new_buff; \
+        self->length += 1; \
+    } \
+    return 0; \
+} \
+\
+int _remove_##T(vector_##T* self, int index) \
+{ \
+  if (!(index >= 0 && index < self->length)) \
+  { \
+    return -1; \
+  } \
+  T * new_buff = (T*) malloc((self->length - 1) * sizeof(T)); \
+  if (new_buff == NULL) \
+  { \
+    return -1; \
+  } \
+  int new_buff_i = 0; \
+  for (int i = 0; i < self->length; i++) \
+  { \
+    if (i == index) \
+    { \
+      continue; \
+    } \
+    new_buff[new_buff_i] = self->buffer[i]; \
+    new_buff_i++; \
+  } \
+  free(self->buffer); \
+  self->buffer = new_buff; \
+  self->length -= 1; \
+  return 0; \
+} \
+\
+int _is_empty_##T(vector_##T *self) { \
+    if (self->length != 0) { \
+        return 0; \
+    } \
+    return 1; \
+} \
+\
+void vector_##T##_clean(vector_##T *self) { \
+    if (self != NULL) { \
+        if (self->buffer != NULL) { \
+            free(self->buffer); \
+        } \
+        free(self); \
+    } \
+} \
+\
+vector_##T *vector_##T##_init() { \
+    vector_##T *self = (vector_##T *) malloc(sizeof(vector_##T)); \
+    if (self == NULL) { \
+        return NULL; \
+    } \
+    self->push = &_push_##T; \
+    self->push_front = &_push_front_##T; \
+    self->remove = &_remove_##T; \
+    self->is_empty = &_is_empty_##T; \
+    return self; \
+} \
+
+
 typedef struct vector vector;
 
 struct vector {
